@@ -40,7 +40,13 @@ INSTALLED_APPS = [
     "pages.apps.PagesConfig",
     "blog.apps.BlogConfig",
     "core.apps.CoreConfig",
+    "django_bootstrap5",
+    "users.apps.UsersConfig",
 ]
+
+AUTH_USER_MODEL = "users.MyUser"
+
+CSRF_FAILURE_VIEW = "pages.views.csrf_failure"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -74,6 +80,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "blogicum.wsgi.application"
 
+LOGIN_REDIRECT_URL = "blog:index"
+LOGIN_URL = "login"
+
+EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
@@ -125,6 +136,9 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
