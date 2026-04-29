@@ -41,10 +41,7 @@ INSTALLED_APPS = [
     "blog.apps.BlogConfig",
     "core.apps.CoreConfig",
     "django_bootstrap5",
-    "users.apps.UsersConfig",
 ]
-
-AUTH_USER_MODEL = "users.MyUser"
 
 CSRF_FAILURE_VIEW = "pages.views.csrf_failure"
 
