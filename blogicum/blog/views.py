@@ -3,9 +3,9 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
 from django.views.generic import ListView, UpdateView, CreateView, DeleteView
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
-
+from django.http import Http404
 from django.db.models import Count
 
 from .models import Post, Category, Comment
@@ -28,12 +28,15 @@ def get_published_posts():
     ).order_by('-pub_date')
 
 
+def paginate(request, queryset):
+    paginator = Paginator(queryset, 10)
+    page_number = request.GET.get('page')
+    return paginator.get_page(page_number)
+
+
 def index(request):
     template = "blog/index.html"
-    post_list = get_published_posts()
-    paginator = Paginator(post_list, 10)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginate(request, get_published_posts())
     context = {'page_obj': page_obj}
     return render(request, template, context)
 
@@ -41,14 +44,19 @@ def index(request):
 def post_detail(request, post_id):
     template = "blog/detail.html"
     post = get_object_or_404(
-        Post.objects.annotate(comment_count=Count('comments')),
+        Post.objects.select_related(
+            'category',
+            'location',
+            'author'
+        ).annotate(comment_count=Count('comments')),
         pk=post_id
     )
     if post.author != request.user:
         if (not post.is_published or 
+            not post.category or 
             not post.category.is_published or 
             post.pub_date > timezone.now()):
-            return render(request, 'pages/404.html', status=404)
+            raise Http404
     
     comments = post.comments.select_related('author')
     form = CommentForm()
@@ -69,9 +77,7 @@ def category_posts(request, category_slug):
         is_published=True
     )
     post_list = get_published_posts().filter(category=category)
-    paginator = Paginator(post_list, 10)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginate(request, post_list)
     context = {
         'category': category,
         'page_obj': page_obj,
